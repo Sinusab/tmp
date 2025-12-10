@@ -1,6 +1,3 @@
-cd /work/PRTNR/CHUV/DIR/rgottar1/owkin_spatial/ITH-proj/sina_run/scenarioB_pipeline
-
-mkdir -p .nf_home/.nextflow
-export HOME=$PWD/.nf_home
-
-echo $HOME
+HOME=$PWD/.nf_home nextflow run main.nf \
+  -c configs/CH_L_275a.config \
+  --outdir results_CH_L_275a_dummy
