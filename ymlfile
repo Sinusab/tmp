@@ -1,0 +1,25 @@
+name: ascna
+description: CNA calling pipeline using WES
+author: sinaab
+org: local
+outdir: .
+version: 0.1.0dev
+is_nfcore: false
+
+skip_features:
+  - github
+  - github_badges
+  - ci
+  - nf-test
+  - codespaces
+  - vscode
+  - code_linters
+  - changelog
+  - citations
+  - multiqc
+  - fastqc
+  - igenomes
+  - nf_core_configs
+  - slackreport
+  - adaptivecard
+  - email
