@@ -1,0 +1,5 @@
+params {
+    reference_fasta = "work/PRTNR/CHUV/DIR/rgottar1/owkin_spatial/ITH-proj/sina_run/nf-core-ascna/resources/genome/GRCh38.fa" 
+    outdir = "data/PRTNR/CHUV/DIR/rgottar1/owkin_spatial/ITH-project/sina_run/nf-core-ascna/results" 
+    gc_window = 50
+}
