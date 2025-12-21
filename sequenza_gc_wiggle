@@ -1,0 +1,20 @@
+name: "sequenza_gc_wiggle"
+description: "Generate GC wiggle file for Sequenza CNA analysis"
+keywords:
+  - CNA
+  - GC bias
+  - sequenza
+tools:
+  - sequenza-utils:
+      description: "Utilities for Sequenza"
+      homepage: "https://sequenza-utils.readthedocs.io"
+      documentation: "https://sequenza-utils.readthedocs.io"
+      licence: ["GPL-3.0"]
+input:
+  - fasta:
+      type: file
+      description: "Reference genome FASTA"
+output:
+  - wig:
+      type: file
+      description: "GC wiggle file"
