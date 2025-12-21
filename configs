@@ -1,5 +1,6 @@
-params {
-    reference_fasta = "work/PRTNR/CHUV/DIR/rgottar1/owkin_spatial/ITH-proj/sina_run/nf-core-ascna/resources/genome/GRCh38.fa" 
-    outdir = "data/PRTNR/CHUV/DIR/rgottar1/owkin_spatial/ITH-project/sina_run/nf-core-ascna/results" 
-    gc_window = 50
-}
+nextflow.enable.dsl = 2
+
+includeConfig 'conf/base.config'
+includeConfig 'conf/modules.config'
+// includeConfig 'conf/slurm.config'   ← فعلاً کامنت یا حذف
+// includeConfig 'conf/test.config'    ← فعلاً لازم نیست
