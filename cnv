@@ -1,98 +1,42 @@
-nextflow.enable.dsl=2
-
-/*
- * Module: CNVKIT_CNA_PRIOR
- * Input : CNVkit segmentation file (*.cbs.cns or *.cns)
- * Output: CNA prior TSV (coarse states: LOSS/NEUTRAL/GAIN)
- *
- * Notes:
- * - This is a tumor-only friendly, reviewer-friendly "coarse CNA prior".
- * - No allele-specific CN, no purity/ploidy inference.
- */
-
-process CNVKIT_CNA_PRIOR {
+process CNVKIT_CNS_TO_BINS {
 
     tag { cns.simpleName }
+
+    publishDir params.outdir, mode: 'copy'
 
     input:
     path cns
 
     output:
-    path "${cns.simpleName}.cna_prior.tsv"
+    path "${cns.simpleName}.cna_bins.tsv"
 
-    /*
-     * You can override these in main.nf via `params.*` (or keep hard-coded).
-     * Using task.ext.* is more nf-core-like, but params is simpler for learning.
-     */
     script:
     """
-    set -euo pipefail
+    awk '
+    BEGIN {
+        OFS="\\t"
+        print "chromosome","start","end","state"
+    }
+    NR>1 {
+        chr=\$1
+        start=\$2
+        end=\$3
+        log2=\$5
+        probes=\$7
 
-    # ---- User-tunable thresholds (coarse / conservative) ----
-    MIN_LEN_BP=\${MIN_LEN_BP:-1000000}      # 1 Mb
-    MIN_PROBES=\${MIN_PROBES:-20}           # minimum probes per segment
-    LOSS_TH=\${LOSS_TH:--0.30}              # log2 <  -0.30 => LOSS
-    GAIN_TH=\${GAIN_TH:-0.30}               # log2 >   0.30 => GAIN
+        length = end - start
 
-    # ---- Build CNA prior TSV ----
-    # Expected input header includes at least: chromosome start end ... log2 ... probes ...
-    # We will parse by column names (header-driven) to be robust to CNVkit versions.
+        # filters
+        if (length < 5000000) next
+        if (probes < 50) next
 
-    awk -v OFS="\\t" \\
-        -v MIN_LEN_BP="\$MIN_LEN_BP" \\
-        -v MIN_PROBES="\$MIN_PROBES" \\
-        -v LOSS_TH="\$LOSS_TH" \\
-        -v GAIN_TH="\$GAIN_TH" '
-        BEGIN {
-            # output header
-            print "sample","chromosome","start","end","length_bp","log2","probes","state"
-        }
-        NR==1 {
-            # map column names to indices using header line
-            for (i=1; i<=NF; i++) {
-                col[\$i]=i
-            }
+        # state assignment
+        if (log2 <= -0.3) state="loss"
+        else if (log2 >= 0.3) state="gain"
+        else state="neutral"
 
-            # required columns (CNVkit cns/cbs.cns typically have these)
-            if (!("chromosome" in col) || !("start" in col) || !("end" in col) || !("log2" in col)) {
-                print "ERROR: Missing required columns in header. Need: chromosome,start,end,log2" > "/dev/stderr"
-                exit 2
-            }
-
-            # probes column might exist; if not, we treat probes as NA and skip probe filtering
-            has_probes = ("probes" in col) ? 1 : 0
-            next
-        }
-        NR>1 {
-            chr = \$(col["chromosome"])
-            st  = \$(col["start"]) + 0
-            en  = \$(col["end"]) + 0
-            lg2 = \$(col["log2"]) + 0
-            len = en - st
-
-            # optional probes
-            prb = (has_probes ? \$(col["probes"]) + 0 : -1)
-
-            # filter: length
-            if (len < MIN_LEN_BP) next
-
-            # filter: probes if available
-            if (has_probes && prb < MIN_PROBES) next
-
-            # classify state
-            state = "NEUTRAL"
-            if (lg2 < LOSS_TH) state = "LOSS"
-            else if (lg2 > GAIN_TH) state = "GAIN"
-
-            # sample name derived from filename (strip known suffixes)
-            sample = FILENAME
-            sub(/^.*\\//, "", sample)                       # remove path
-            sub(/_cbs\\.cns\$/, "", sample)
-            sub(/\\.cbs\\.cns\$/, "", sample)
-            sub(/\\.cns\$/, "", sample)
-
-            print sample, chr, st, en, len, lg2, (has_probes ? prb : "NA"), state
-        }
-    ' "${cns}" > "${cns.simpleName}.cna_prior.tsv"
+        print chr,start,end,state
+    }
+    ' ${cns} > ${cns.simpleName}.cna_bins.tsv
     """
 }
