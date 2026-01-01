@@ -1,6 +1,14 @@
-nextflow.enable.dsl = 2
-
-includeConfig 'conf/base.config'
-includeConfig 'conf/modules.config'
-// includeConfig 'conf/slurm.config'   ← فعلاً کامنت یا حذف
-// includeConfig 'conf/test.config'    ← فعلاً لازم نیست
+awk -v OFS="\t" '
+{
+  gene=$4
+  state=$8
+  seen[gene]=1
+  if(state=="loss") s[gene]="loss"
+  else if(state=="gain" && s[gene]!="loss") s[gene]="gain"
+  else if(!(gene in s)) s[gene]="neutral"
+}
+END{
+  print "gene","state"
+  for(g in seen) print g, s[g]
+}
+' genes_with_cna.tsv | sort -k1,1 > gene_state.tsv
