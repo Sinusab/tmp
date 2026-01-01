@@ -1,42 +1,26 @@
-process CNVKIT_CNS_TO_BINS {
-
-    tag { cns.simpleName }
-
-    publishDir params.outdir, mode: 'copy'
-
-    input:
-    path cns
-
-    output:
-    path "${cns.simpleName}.cna_bins.tsv"
-
-    script:
-    """
-    awk '
-    BEGIN {
-        OFS="\\t"
-        print "chromosome","start","end","state"
-    }
-    NR>1 {
-        chr=\$1
-        start=\$2
-        end=\$3
-        log2=\$5
-        probes=\$7
-
-        length = end - start
-
-        # filters
-        if (length < 5000000) next
-        if (probes < 50) next
-
-        # state assignment
-        if (log2 <= -0.3) state="loss"
-        else if (log2 >= 0.3) state="gain"
-        else state="neutral"
-
-        print chr,start,end,state
-    }
-    ' ${cns} > ${cns.simpleName}.cna_bins.tsv
-    """
+zcat gencode.v43.annotation.gtf.gz | awk '
+BEGIN {
+  OFS="\t"
+  print "chr","start","end","gene"
 }
+
+$0 !~ /^#/ && $3=="gene" {
+
+  chr=$1
+  start=$4
+  end=$5
+
+  n = split($0, a, ";")
+  gene="NA"
+
+  for (i=1; i<=n; i++) {
+    if (a[i] ~ /gene_name/) {
+      sub(/.*gene_name "/, "", a[i])
+      sub(/".*/, "", a[i])
+      gene = a[i]
+    }
+  }
+
+  print chr,start,end,gene
+}
+' | head
