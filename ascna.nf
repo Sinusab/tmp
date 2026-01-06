@@ -1,29 +1,25 @@
-process GENE_TO_BIN {
+process RDR_FROM_H5 {
 
-  tag "gene_to_bin"
+  tag "rdr_from_h5"
 
   publishDir params.outdir, mode: 'copy', overwrite: true
 
   input:
-    path genes_bed
-    path cna_bins_bed
+    path h5
+    path gene_to_bin
+    path qc_per_spot optional true
 
   output:
-    path "gene_to_bin.tsv"
+    path "rdr_per_spot_per_bin.tsv"
+    path "rdr_qc.tsv"
 
   script:
   """
-  set -euo pipefail
-
-  # clean genes BED: remove header + convert to 0-based start
-  awk 'BEGIN{OFS="\\t"}
-       NR==1 {next}
-       {s=\$2-1; if(s<0)s=0; print \$1,s,\$3,\$4}' ${genes_bed} > genes.clean.bed
-
-  bedtools intersect \
-    -a genes.clean.bed \
-    -b ${cna_bins_bed} \
-    -wa -wb \
-    > gene_to_bin.tsv
+  Rscript ${moduleDir}/rdr_from_h5.R \
+    ${h5} \
+    ${gene_to_bin} \
+    ${qc_per_spot:-NONE} \
+    rdr_per_spot_per_bin.tsv \
+    rdr_qc.tsv
   """
 }
