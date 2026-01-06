@@ -1,51 +1,72 @@
 #!/usr/bin/env Rscript
 
-args <- commandArgs(trailingOnly = TRUE)
+## ---------------------------
+## Spatial QC for 10x Visium
+## ---------------------------
 
-if (length(args) != 2) {
-  stop("Usage: Rscript spatial_qc.R <input_h5> <output_tsv>")
-}
-
-h5_file  <- args[1]
-out_file <- args[2]
+## 1) HPC-safe HDF5 setting
+Sys.setenv(HDF5_USE_FILE_LOCKING = "FALSE")
 
 suppressPackageStartupMessages({
+  library(Seurat)
   library(rhdf5)
 })
 
-h5 <- H5Fopen(h5_file)
+## 2) Parse command-line arguments
+args <- commandArgs(trailingOnly = TRUE)
 
-data   <- h5read(h5, "/matrix/data")
-indptr <- h5read(h5, "/matrix/indptr")
-shape  <- h5read(h5, "/matrix/shape")
+if (length(args) < 2) {
+  stop("Usage: spatial_qc.R <sample_filtered_feature_bc_matrix.h5> <output_qc.tsv>")
+}
 
-H5Fclose(h5)
+h5_file <- args[1]
+out_tsv <- args[2]
 
-n_genes <- shape[1]
-n_spots <- shape[2]
+if (!file.exists(h5_file)) {
+  stop(paste("Input H5 file does not exist:", h5_file))
+}
 
-umi_per_spot <- sapply(
-  1:(length(indptr) - 1),
-  function(i) {
-    sum(data[(indptr[i] + 1):indptr[i + 1]])
-  }
+## 3) Read 10x Visium counts
+counts <- Read10X_h5(h5_file)
+
+## 4) Create minimal Seurat object
+seu <- CreateSeuratObject(
+  counts = counts,
+  assay  = "Spatial",
+  project = "Visium_QC"
 )
 
-qc <- data.frame(
-  n_spots      = n_spots,
-  n_genes      = n_genes,
-  mean_umi     = mean(umi_per_spot),
-  median_umi   = median(umi_per_spot),
-  min_umi      = min(umi_per_spot),
-  max_umi      = max(umi_per_spot),
-  frac_low_umi = mean(umi_per_spot < 100),
-  sparsity     = 1 - (length(data) / (n_genes * n_spots))
+## 5) Basic QC metrics (spot-level)
+qc_spots <- data.frame(
+  barcode        = colnames(seu),
+  nUMI           = seu$nCount_Spatial,
+  nFeature       = seu$nFeature_Spatial
+)
+
+## 6) Global QC summary
+qc_summary <- data.frame(
+  n_spots        = ncol(seu),
+  mean_UMI       = mean(seu$nCount_Spatial),
+  median_UMI     = median(seu$nCount_Spatial),
+  mean_features  = mean(seu$nFeature_Spatial),
+  median_features= median(seu$nFeature_Spatial)
+)
+
+## 7) Write outputs
+write.table(
+  qc_spots,
+  file = sub("\\.tsv$", "_per_spot.tsv", out_tsv),
+  sep = "\t",
+  quote = FALSE,
+  row.names = FALSE
 )
 
 write.table(
-  qc,
-  file = out_file,
+  qc_summary,
+  file = out_tsv,
   sep = "\t",
-  row.names = FALSE,
-  quote = FALSE
+  quote = FALSE,
+  row.names = FALSE
 )
+
+message("Spatial QC completed successfully")
