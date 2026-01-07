@@ -1,1 +1,3 @@
-wget -O spaceranger-4.0.1.tar.gz "https://cf.10xgenomics.com/releases/spatial-exp/spaceranger-4.0.1.tar.gz?Expires=1767826207&Key-Pair-Id=APKAI7S6A5RYOXBWRPDA&Signature=RpvsQLBZcFGr5OvJ8YBa5CSCAcsg~CNgLhlvRsGexEUiKmcSNvoEuUETvFuASBAjvmidCmcwbNMBXdZ7J-BPbyXjPgRGI96yWTzkn542KJ~2wWda-VPdWt~~KtZaunxPG~YiLt8uRjIeay0oaLNy1psAl2R03udatBYzzlRGnmTZsStdogZfvE81~gR3FfHKhyFaDbIC0LIxA4-CdUDiB9FoeT1TfE9b3T3vT7XP1NiqCr6ijE4vuRJJjfo1GiCv6VYYe1xpStWYXxDL87TCzDIK6KF3urWy0So-QsWxxdA0spj7ogJ4kusCQK9KFEmyT3CDzR~k7MuehTaEGDdIHQ__"
+cat << 'EOF' | base64 -d > resources/spatial/dummy.png
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=
+EOF
