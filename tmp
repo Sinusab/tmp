@@ -1,71 +1,10 @@
-import os
-import pandas as pd
-
-BASE_DIR = "Sina-out"
-OUTPUT_FILE = os.path.join(BASE_DIR, "grid_summary.tsv")
-
-rows = []
-
-for subdir in os.listdir(BASE_DIR):
-    full_path = os.path.join(BASE_DIR, subdir)
-    
-    if not os.path.isdir(full_path):
-        continue
-    
-    tsv_file = os.path.join(full_path, "dragen_segments_spatial_expression_support.tsv")
-    
-    if not os.path.exists(tsv_file):
-        continue
-    
-    try:
-        df = pd.read_csv(tsv_file, sep="\t")
-    except Exception as e:
-        print(f"Error reading {tsv_file}: {e}")
-        continue
-
-    # اعمال همان فیلتر اسلاید
-    df_filtered = df[(df["length_bp"] > 100000) & (df["n_genes_used_matrix"] >= 10)]
-
-    if len(df_filtered) == 0:
-        continue
-
-    # DEL
-    del_df = df_filtered[df_filtered["call"] == "DEL"]
-    n_del = len(del_df)
-    del_percent = 100 * del_df["direction_matches_expected"].mean() if n_del > 0 else 0
-
-    # DUP
-    dup_df = df_filtered[df_filtered["call"] == "DUP"]
-    n_dup = len(dup_df)
-    dup_percent = 100 * dup_df["direction_matches_expected"].mean() if n_dup > 0 else 0
-
-    # استخراج پارامترها از اسم فولدر
-    # مثال: mg10_ms100000_gap5000000
-    try:
-        parts = subdir.replace("mg", "").replace("ms", "").replace("gap", "").split("_")
-        min_genes = int(parts[0])
-        min_seg_bp = int(parts[1])
-        merge_gap = int(parts[2])
-    except:
-        min_genes = None
-        min_seg_bp = None
-        merge_gap = None
-
-    rows.append({
-        "min_genes": min_genes,
-        "min_seg_bp": min_seg_bp,
-        "merge_gap_bp": merge_gap,
-        "n_DEL": n_del,
-        "DEL_percent": del_percent,
-        "n_DUP": n_dup,
-        "DUP_percent": dup_percent,
-        "total_segments": len(df_filtered)
-    })
-
-summary_df = pd.DataFrame(rows)
-summary_df = summary_df.sort_values(["min_genes", "min_seg_bp", "merge_gap_bp"])
-
-summary_df.to_csv(OUTPUT_FILE, sep="\t", index=False)
-
-print("Summary saved to:", OUTPUT_FILE)
-print(summary_df)
+python dragen_vs_visium_expression.py \
+  --tenx_dir filtered_feature_bc_matrix \
+  --dragen_vcf ... \
+  --hgtables ... \
+  --tumor_barcodes ... \
+  --normal_barcodes ... \
+  --outdir Sina-out/base_run \
+  --min_genes 1 \
+  --min_seg_bp 1 \
+  --merge_gap_bp 0
