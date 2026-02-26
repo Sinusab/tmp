@@ -1,9 +1,9 @@
 python dragen_vs_visium_expression.py \
   --tenx_dir filtered_feature_bc_matrix \
-  --dragen_vcf ... \
-  --hgtables ... \
-  --tumor_barcodes ... \
-  --normal_barcodes ... \
+  --dragen_vcf /home/sagemaker-user/localfiles/visium/compare-CNA/CH_L_282a_DRAGEN/CH_L_282a_annotated.vcf \
+  --hgtables /home/sagemaker-user/localfiles/visium/starch-run/STARCH/hgTables_hg19.txt \
+  --tumor_barcodes /home/sagemaker-user/localfiles/visium/spaceranger-run/process-data-owkins/tumor_spots_barcodes.txt \
+  --normal_barcodes /home/sagemaker-user/localfiles/visium/spaceranger-run/process-data-owkins/normal_spots_barcodes.txt \
   --outdir Sina-out/base_run \
   --min_genes 1 \
   --min_seg_bp 1 \
