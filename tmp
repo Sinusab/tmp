@@ -1,0 +1,16 @@
+awk -F'\t' '
+NR==1{
+  for(i=1;i<=NF;i++){
+    if($i=="call") c=i;
+    if($i=="direction_matches_expected") d=i
+  }
+}
+NR>1 && $c=="DEL"{
+  total++;
+  if($d=="True") ok++
+}
+END{
+  print "DEL total:", total;
+  print "DEL consistent:", ok;
+  print "DEL percent:", 100*ok/total
+}' dragen_segments_spatial_expression_support.tsv
