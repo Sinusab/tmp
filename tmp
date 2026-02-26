@@ -1,50 +1,33 @@
-import pandas as pd
-import itertools
+#!/bin/bash
 
-BASE_FILE = "Sina-out/base_run/dragen_segments_spatial_expression_support.tsv"
-OUT_FILE = "Sina-out/fast_grid_summary.tsv"
+TENX="filtered_feature_bc_matrix"
+VCF="/home/sagemaker-user/localfiles/visium/compare-CNA/CH_L_282a_DRAGEN/CH_L_282a_annotated.vcf"
+HGT="/home/sagemaker-user/localfiles/visium/starch-run/STARCH/hgTables_hg19.txt"
+TUMOR="/home/sagemaker-user/localfiles/visium/spaceranger-run/process-data-owkins/tumor_spots_barcodes.txt"
+NORMAL="/home/sagemaker-user/localfiles/visium/spaceranger-run/process-data-owkins/normal_spots_barcodes.txt"
 
-df = pd.read_csv(BASE_FILE, sep="\t")
-
-min_genes_list = [5, 10, 15, 20]
-min_seg_list = [100000, 300000, 500000]
-merge_gap_list = [0, 5000000, 10000000]
-
-rows = []
-
-for mg, ms, gap in itertools.product(min_genes_list, min_seg_list, merge_gap_list):
-    
-    # فقط سگمنت‌هایی که merge شده‌اند در base_run وجود ندارند
-    # پس merge_gap اینجا فقط label است
-    df_filtered = df[
-        (df["length_bp"] > ms) &
-        (df["n_genes_used_matrix"] >= mg)
-    ].copy()
-    
-    if len(df_filtered) == 0:
-        continue
-    
-    del_df = df_filtered[df_filtered["call"] == "DEL"]
-    dup_df = df_filtered[df_filtered["call"] == "DUP"]
-    
-    del_percent = 100 * del_df["direction_matches_expected"].mean() if len(del_df) > 0 else 0
-    dup_percent = 100 * dup_df["direction_matches_expected"].mean() if len(dup_df) > 0 else 0
-    
-    rows.append({
-        "min_genes": mg,
-        "min_seg_bp": ms,
-        "merge_gap_bp": gap,
-        "n_DEL": len(del_df),
-        "DEL_percent": del_percent,
-        "n_DUP": len(dup_df),
-        "DUP_percent": dup_percent,
-        "total_segments": len(df_filtered)
-    })
-
-summary = pd.DataFrame(rows)
-summary = summary.sort_values(["DUP_percent"], ascending=False)
-
-summary.to_csv(OUT_FILE, sep="\t", index=False)
-
-print(summary)
-print("\nSaved to:", OUT_FILE)
+for MG in 5 10 15 20
+do
+  for MS in 100000 300000 500000
+  do
+    for GAP in 0 5000000 10000000
+    do
+      OUTDIR="Sina-out/mg${MG}_ms${MS}_gap${GAP}"
+      mkdir -p $OUTDIR
+      
+      echo "Running MG=$MG MS=$MS GAP=$GAP"
+      
+      python dragen_vs_visium_expression.py \
+        --tenx_dir $TENX \
+        --dragen_vcf $VCF \
+        --hgtables $HGT \
+        --tumor_barcodes $TUMOR \
+        --normal_barcodes $NORMAL \
+        --outdir $OUTDIR \
+        --min_genes $MG \
+        --min_seg_bp $MS \
+        --merge_gap_bp $GAP
+      
+    done
+  done
+done
