@@ -6,28 +6,29 @@ HGT="/home/sagemaker-user/localfiles/visium/starch-run/STARCH/hgTables_hg19.txt"
 TUMOR="/home/sagemaker-user/localfiles/visium/spaceranger-run/process-data-owkins/tumor_spots_barcodes.txt"
 NORMAL="/home/sagemaker-user/localfiles/visium/spaceranger-run/process-data-owkins/normal_spots_barcodes.txt"
 
-for MG in 5 10 15 20
+for MG in 6 9 12
 do
   for MS in 100000 300000 500000
   do
-    for GAP in 0 5000000 10000000
+    for GAP in 5000000 10000000 15000000
     do
+
       OUTDIR="Sina-out/mg${MG}_ms${MS}_gap${GAP}"
-      mkdir -p $OUTDIR
-      
+      mkdir -p "$OUTDIR"
+
       echo "Running MG=$MG MS=$MS GAP=$GAP"
-      
+
       python dragen_vs_visium_expression.py \
-        --tenx_dir $TENX \
-        --dragen_vcf $VCF \
-        --hgtables $HGT \
-        --tumor_barcodes $TUMOR \
-        --normal_barcodes $NORMAL \
-        --outdir $OUTDIR \
-        --min_genes $MG \
-        --min_seg_bp $MS \
-        --merge_gap_bp $GAP
-      
+        --tenx_dir "$TENX" \
+        --dragen_vcf "$VCF" \
+        --hgtables "$HGT" \
+        --tumor_barcodes "$TUMOR" \
+        --normal_barcodes "$NORMAL" \
+        --outdir "$OUTDIR" \
+        --min_genes "$MG" \
+        --min_seg_bp "$MS" \
+        --merge_gap_bp "$GAP"
+
     done
   done
 done
