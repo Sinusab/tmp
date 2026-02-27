@@ -1,27 +1,6 @@
-zcat ~/localfiles/visium/starch-run/STARCH/gencode.v45.annotation.gtf.gz | awk -F'\t' '
-BEGIN{
-  OFS="\t";
-  print "chrom","start","end","symbol"
-}
-$0 !~ /^#/ && $3=="gene"{
-  chrom=$1
-  start=$4-1
-  end=$5
-
-  symbol=""
-  n=split($9, arr, ";")
-  for(i=1;i<=n;i++){
-    if(arr[i] ~ /gene_name/){
-      gsub(/gene_name "/,"",arr[i])
-      gsub(/"/,"",arr[i])
-      gsub(/^[ \t]+|[ \t]+$/,"",arr[i])
-      symbol=arr[i]
-      break
-    }
-  }
-
-  if(symbol!="" && start>=0 && end>start){
-    printf "%s\t%d\t%d\t%s\n", chrom,start,end,symbol
-  }
-}
-' > ~/localfiles/visium/starch-run/STARCH/hgTables_hg38.txt
+python - <<'PY'
+import pandas as pd
+path = "/home/sagemaker-user/localfiles/visium/starch-run/STARCH/hgTables_hg38.txt"
+df = pd.read_csv(path, sep="\t")
+print(df.columns.tolist())
+PY
