@@ -1,1 +1,1 @@
-grep -v '^#' CH_L_282a_annotated.vcf | awk '$1=="chr7"{print $1,$2,$8}' | head
+curl -O https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/gencode.v45.annotation.gtf.gz
