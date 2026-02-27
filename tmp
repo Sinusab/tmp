@@ -1,17 +1,32 @@
 zcat gencode.v45.annotation.gtf.gz | awk -F'\t' '
 $0 !~ /^#/ && $3=="gene"{
-  chrom=$1;
-  start=$4-1;
-  end=$5;
-  strand=$7;
 
-  match($9, /gene_name "([^"]+)"/, a);
-  gname=a[1];
+  chrom=$1
+  start=$4-1
+  end=$5
+  strand=$7
 
-  match($9, /gene_id "([^"]+)"/, b);
-  gid=b[1];
+  gid=""
+  gname=""
+
+  n=split($9, arr, ";")
+  for(i=1;i<=n;i++){
+    if(arr[i] ~ /gene_id/){
+      gsub(/gene_id "/,"",arr[i])
+      gsub(/"/,"",arr[i])
+      gsub(/ /,"",arr[i])
+      gid=arr[i]
+    }
+    if(arr[i] ~ /gene_name/){
+      gsub(/gene_name "/,"",arr[i])
+      gsub(/"/,"",arr[i])
+      gsub(/ /,"",arr[i])
+      gname=arr[i]
+    }
+  }
 
   if(gid!=""){
     print gid"\t"gname"\t"chrom"\t"strand"\t"start"\t"end
   }
-}' | sort -k3,3 -k5,5n > hgTables_hg38.txt
+}
+' | sort -k3,3 -k5,5n > hgTables_hg38.txt
