@@ -1,9 +1,2 @@
-python - <<'PY'
-p="/home/sagemaker-user/localfiles/visium/STARCH-vs-WES-data/dragen_vs_visium_expression.py"
-txt=open(p).read().splitlines()
-
-for i,l in enumerate(txt):
-    if "def read_hgtables_gene_coords" in l:
-        print("\n".join(txt[i:i+160]))
-        break
-PY
+sed -n '/def read_hgtables_gene_coords/,/def /p' \
+/home/sagemaker-user/localfiles/visium/STARCH-vs-WES-data/dragen_vs_visium_expression.py | head -n 120
