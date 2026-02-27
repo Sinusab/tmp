@@ -1,6 +1,11 @@
-python - <<'PY'
-import pandas as pd
-path = "/home/sagemaker-user/localfiles/visium/starch-run/STARCH/hgTables_hg38.txt"
-df = pd.read_csv(path, sep="\t")
-print(df.columns.tolist())
-PY
+python dragen_vs_visium_expression_optimize.py \
+  --tenx_dir filtered_feature_bc_matrix \
+  --dragen_vcf CH_L_282a_annotated.vcf \
+  --hgtables ~/localfiles/visium/starch-run/STARCH/hgTables_hg38.txt \
+  --tumor_barcodes tumor_spots_barcodes.txt \
+  --normal_barcodes normal_spots_barcodes.txt \
+  --outdir Sina-out/test_run \
+  --baseline_mode normal \
+  --min_genes 10 \
+  --min_seg_bp 100000 \
+  --merge_gap_bp 1000000
