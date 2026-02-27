@@ -1,11 +1,81 @@
-python dragen_vs_visium_Sina.py \
-  --tenx_dir "$TENX" \
-  --dragen_vcf "$VCF" \
-  --hgtables "$HGT" \
-  --tumor_barcodes "$TUMOR" \
-  --normal_barcodes "$NORMAL" \
-  --outdir Sina-out/test \
-  --baseline_mode normal \
-  --min_genes 10 \
-  --min_seg_bp 100000 \
-  --merge_gap_bp 1000000
+#!/usr/bin/env python3
+import os
+import shutil
+import pandas as pd
+
+# ==============================
+# EDIT THESE PATHS
+# ==============================
+
+BASE_DIR = "/home/sagemaker-user/localfiles"
+VISIUM_DIR = os.path.join(BASE_DIR, "visium/spaceranger_count")
+CNV_DIR = os.path.join(BASE_DIR, "wes/sample_level/cnv")
+
+# اگر barcode فایل‌ها جای خاصی هستند اینو تنظیم کن
+BARCODE_DIR = BASE_DIR  # اگر جای دیگری هستند عوض کن
+
+# مقصد نهایی
+DEST_DIR = "/home/sagemaker-user/localfiles/visium/STARCH-vs-WES-data/Sina/data-files"
+
+# ==============================
+
+os.makedirs(DEST_DIR, exist_ok=True)
+
+patients = []
+
+for folder in os.listdir(VISIUM_DIR):
+    if not folder.endswith("_vis"):
+        continue
+
+    patient_id = folder.replace("_vis", "")
+    print(f"Processing {patient_id}")
+
+    # ---------- Paths ----------
+    tenx_dir = os.path.join(VISIUM_DIR, folder, "filtered_feature_bc_matrix")
+    vcf_path = os.path.join(CNV_DIR, f"{patient_id}_annotated.vcf")
+
+    tumor_barcodes = os.path.join(BARCODE_DIR, f"{patient_id}_tumor_spots_barcodes.txt")
+    normal_barcodes = os.path.join(BARCODE_DIR, f"{patient_id}_normal_spots_barcodes.txt")
+
+    # ---------- Sanity check ----------
+    if not os.path.exists(tenx_dir):
+        print(f"  ❌ Missing tenx_dir for {patient_id}")
+        continue
+
+    if not os.path.exists(vcf_path):
+        print(f"  ❌ Missing VCF for {patient_id}")
+        continue
+
+    if not os.path.exists(tumor_barcodes):
+        print(f"  ⚠ Missing tumor barcodes for {patient_id}")
+        continue
+
+    if not os.path.exists(normal_barcodes):
+        print(f"  ⚠ Missing normal barcodes for {patient_id}")
+        continue
+
+    # ---------- Create patient folder ----------
+    patient_dest = os.path.join(DEST_DIR, patient_id)
+    os.makedirs(patient_dest, exist_ok=True)
+
+    # Copy files
+    shutil.copytree(tenx_dir, os.path.join(patient_dest, "filtered_feature_bc_matrix"), dirs_exist_ok=True)
+    shutil.copy(vcf_path, os.path.join(patient_dest, f"{patient_id}_annotated.vcf"))
+    shutil.copy(tumor_barcodes, os.path.join(patient_dest, "tumor_spots_barcodes.txt"))
+    shutil.copy(normal_barcodes, os.path.join(patient_dest, "normal_spots_barcodes.txt"))
+
+    # Add to manifest
+    patients.append({
+        "patient_id": patient_id,
+        "tenx_dir": os.path.join(patient_dest, "filtered_feature_bc_matrix"),
+        "dragen_vcf": os.path.join(patient_dest, f"{patient_id}_annotated.vcf"),
+        "tumor_barcodes": os.path.join(patient_dest, "tumor_spots_barcodes.txt"),
+        "normal_barcodes": os.path.join(patient_dest, "normal_spots_barcodes.txt"),
+    })
+
+# Write manifest
+manifest_path = os.path.join(DEST_DIR, "patients.tsv")
+pd.DataFrame(patients).to_csv(manifest_path, sep="\t", index=False)
+
+print("\nDONE")
+print(f"Manifest written to: {manifest_path}")
