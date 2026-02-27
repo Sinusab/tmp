@@ -1,8 +1,1 @@
-URL="https://genome-mirror.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz"
-
-echo "Downloading hg38 refGene from UCSC mirror..."
-
-curl -L --fail --retry 5 --retry-delay 5 "$URL" -o refGene_hg38.txt.gz
-
-echo "Download finished."
-ls -lh refGene_hg38.txt.gz
+wget https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/gencode.v45.annotation.gtf.gz
