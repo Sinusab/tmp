@@ -1,1 +1,1 @@
-wget http://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
+curl -O https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/refGene.txt.gz
