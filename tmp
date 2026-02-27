@@ -1,2 +1,41 @@
-sed -n '/def read_hgtables_gene_coords/,/def /p' \
-/home/sagemaker-user/localfiles/visium/STARCH-vs-WES-data/dragen_vs_visium_expression.py | head -n 120
+GTF_GZ="$HOME/localfiles/visium/starch-run/STARCH/gencode.v45.annotation.gtf.gz"
+OUT="$HOME/localfiles/visium/starch-run/STARCH/hgTables_hg38.txt"
+
+if [[ ! -f "$GTF_GZ" ]]; then
+  echo "ERROR: GTF not found: $GTF_GZ"
+  exit 1
+fi
+
+# تولید فایل با فرمت قابل قبول برای read_hgtables_gene_coords():
+# header: chrom, start, end, symbol
+# start را 0-based می‌کنیم: start = gtf_start - 1
+zcat "$GTF_GZ" | awk -F'\t' '
+BEGIN{OFS="\t"; print "chrom","start","end","symbol"}
+$0 !~ /^#/ && $3=="gene"{
+  chrom=$1
+  start=$4-1
+  end=$5
+
+  symbol=""
+  n=split($9, arr, ";")
+  for(i=1;i<=n;i++){
+    if(arr[i] ~ /gene_name/){
+      gsub(/gene_name "/,"",arr[i])
+      gsub(/"/,"",arr[i])
+      gsub(/^[ \t]+|[ \t]+$/,"",arr[i])
+      symbol=arr[i]
+      break
+    }
+  }
+
+  if(symbol!="" && start>=0 && end>start){
+    print chrom,start,end,symbol
+  }
+}
+' | sort -k1,1 -k2,2n > "$OUT"
+
+echo "DONE: wrote $OUT"
+echo "Preview:"
+head -n 5 "$OUT"
+echo "Lines:"
+wc -l "$OUT"
