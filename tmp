@@ -1,1 +1,17 @@
-curl -O https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_45/gencode.v45.annotation.gtf.gz
+zcat gencode.v45.annotation.gtf.gz | awk -F'\t' '
+$0 !~ /^#/ && $3=="gene"{
+  chrom=$1;
+  start=$4-1;
+  end=$5;
+  strand=$7;
+
+  match($9, /gene_name "([^"]+)"/, a);
+  gname=a[1];
+
+  match($9, /gene_id "([^"]+)"/, b);
+  gid=b[1];
+
+  if(gid!=""){
+    print gid"\t"gname"\t"chrom"\t"strand"\t"start"\t"end
+  }
+}' | sort -k3,3 -k5,5n > hgTables_hg38.txt
