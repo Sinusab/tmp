@@ -1,4 +1,14 @@
-awk -F'\t' 'BEGIN{OFS="\t"; print "chrom","start","end","gene_symbol","gene_id"}
-{
-  print $3,$5,$6,$2,$1
-}' hgTables_hg38.txt > hgTables_hg38_fixed.txt
+python - <<'PY'
+import re
+path="/home/sagemaker-user/localfiles/visium/STARCH-vs-WES-data/dragen_vs_visium_expression.py"
+with open(path) as f:
+    lines=f.readlines()
+
+# اطراف تابع read_hgtables_gene_coords رو چاپ کن
+for i,l in enumerate(lines):
+    if "def read_hgtables_gene_coords" in l:
+        start=max(0,i-5)
+        end=min(len(lines), i+120)
+        print("".join(lines[start:end]))
+        break
+PY
